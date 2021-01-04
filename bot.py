@@ -2,6 +2,7 @@ from openwa import WhatsAPIDriver
 from openwa.objects.chat import Chat
 from lib import get_data, get_message
 from sys import exit
+import json, sched, time
 
 driver = WhatsAPIDriver(profile="/home/misha/.mozilla/firefox/cbjepcbf.default")
 driver.wait_for_login()
@@ -16,8 +17,24 @@ if len(test_chat) == 0:
 
 test_chat = test_chat[0]
 
-message = get_message(get_data())
+data = None
+try:
+    with open("data.json", "r") as f:
+        data = json.load(f)
+except:
+    pass
 
-test_chat.send_message(message)
-print("Done")
-driver.close()
+def check_for_updates():
+    global data
+    current_data = get_data()
+    if json.dumps(current_data, sort_keys=True) != json.dumps(data, sort_keys=True):
+        # Different!
+        data = current_data
+        with open("data.json", "w") as f:
+            json.dump(current_data, f)
+        test_chat.send_message(get_message(current_data))
+    scheduler.enterabs(time.time() + 1800, 0, check_for_updates)
+
+scheduler = sched.scheduler(time.time, time.sleep)
+scheduler.enterabs(time.time() + 1, 0, check_for_updates)
+scheduler.run()
