@@ -1,6 +1,7 @@
 from requests import get, post
-from os import environ
+from datetime import datetime
 from pprint import pprint
+from os import environ
 
 KEY = environ["MOODLE_API_KEY"]
 URL = environ["MOODLE_URL"]
@@ -47,6 +48,15 @@ def call(fname, **kwargs):
         raise SystemError("Error calling Moodle API\n", response)
     return response
 
-calendar_data = call("core_calendar_get_calendar_upcoming_view")["events"]
-minimal_data = [{"name": x["name"], "timestart": x["timestart"], "timemodified": x["timemodified"]} for x in calendar_data]
-pprint(minimal_data)
+def get_data():
+    calendar_data = call("core_calendar_get_calendar_upcoming_view")["events"]
+    return [{"name": x["name"], "timestart": x["timestart"], "timemodified": x["timemodified"]} for x in calendar_data]
+
+def get_message(data):
+    result = ""
+    for x in data:
+        timestart = datetime.fromtimestamp(x["timestart"]).strftime("%d/%m/%Y, %H:%M:%S")
+        timemodified = datetime.fromtimestamp(x["timemodified"]).strftime("%d/%m/%Y, %H:%M:%S")
+        result += "*" + x["name"] + "*:\n    " + timestart + ", שונה לאחרונה ב " + timemodified + "\n"
+    return result
+

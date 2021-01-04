@@ -1,8 +1,7 @@
 from openwa import WhatsAPIDriver
-from openwa.objects.message import MessageGroup
 from openwa.objects.chat import Chat
+from lib import get_data, get_message
 from sys import exit
-from time import sleep
 
 driver = WhatsAPIDriver(profile="/home/misha/.mozilla/firefox/cbjepcbf.default")
 driver.wait_for_login()
@@ -16,6 +15,9 @@ if len(test_chat) == 0:
     exit(1)
 
 test_chat = test_chat[0]
-test_chat.send_message("Hello")
+
+message = get_message(get_data())
+
+test_chat.send_message(message)
 print("Done")
 driver.close()
