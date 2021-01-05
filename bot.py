@@ -3,12 +3,13 @@ from openwa.objects.chat import Chat
 from lib import get_data, get_message
 from sys import exit
 import json, sched, time
+from os import environ
 
-driver = WhatsAPIDriver(profile="/home/misha/.mozilla/firefox/cbjepcbf.default")
+driver = WhatsAPIDriver(environ["CLIENT"], environ["PROFILE"], headless=True)
 driver.wait_for_login()
 print("Bot started")
 
-test_chat = [x for x in driver.get_all_chats() if x.id == "972542286434-1609678617@g.us"]
+test_chat = [x for x in driver.get_all_chats() if x.id == environ["CHAT"]]
 
 if len(test_chat) == 0:
     print("Can't find chat.")
