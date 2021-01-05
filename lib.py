@@ -1,6 +1,7 @@
 from requests import get, post
 from datetime import datetime
 from pprint import pprint
+from time import time
 from os import environ
 
 KEY = environ["MOODLE_API_KEY"]
@@ -50,13 +51,18 @@ def call(fname, **kwargs):
 
 def get_data():
     calendar_data = call("core_calendar_get_calendar_upcoming_view")["events"]
-    return [{"name": x["name"], "timestart": x["timestart"], "timemodified": x["timemodified"]} for x in calendar_data]
+    return {"timestamp": time(), "values": [
+        {
+            "name": x["name"],
+            "timestart": x["timestart"],
+            "timemodified": x["timemodified"],
+            "islastday": x["islastday"]
+        } for x in calendar_data if x["course"]["id"] == 6000000053]}
 
 def get_message(data):
     result = ""
-    for x in data:
+    for x in data["values"]:
         timestart = datetime.fromtimestamp(x["timestart"]).strftime("%d/%m/%Y, %H:%M:%S")
         timemodified = datetime.fromtimestamp(x["timemodified"]).strftime("%d/%m/%Y, %H:%M:%S")
         result += "*" + x["name"] + "*:\n    " + timestart + ", שונה לאחרונה ב " + timemodified + "\n"
     return result
-
