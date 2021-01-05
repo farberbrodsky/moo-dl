@@ -12,7 +12,7 @@ from datetime import datetime
 driver = WhatsAPIDriver(
     client=environ["CLIENT"],
     profile=environ["PROFILE"],
-    headless=False)
+    headless=True)
 driver.wait_for_login()
 print("Bot started")
 
