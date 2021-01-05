@@ -2,10 +2,7 @@ from openwa import WhatsAPIDriver
 from openwa.objects.chat import Chat
 from openwa.objects.message import Message
 from lib import get_data as get_moodle_data, get_message as moodle_message
-import sys
-import json
-import sched
-import time
+import sys, json, time
 from os import environ
 from datetime import datetime
 
@@ -14,6 +11,7 @@ driver = WhatsAPIDriver(
     profile=environ["PROFILE"],
     headless=True)
 driver.wait_for_login()
+time.sleep(1)
 print("Bot started")
 
 test_chat = [x for x in driver.get_all_chats() if x.id == environ["CHAT"]]
