@@ -80,7 +80,7 @@ def got_message(message):
             ))
     elif command_first_word == "סטיקר":
         if isinstance(msg, MediaMessage):
-            img = Image.open(driver.download_media(msg))
+            img = Image.open(driver.download_media(msg, force_download=True))
             # Resize image
             if img.width > img.height:
                 result_width = 512
@@ -106,6 +106,11 @@ def got_message(message):
             return driver.wapi_functions.sendImageAsSticker(img_base_64, msg.chat_id, {})
         else:
             driver.chat_send_message(msg.chat_id, "אין פה תמונה")
+    elif command_first_word == "מידע":
+        driver.chat_send_message(msg.chat_id, """היי אני הבוט של מישה!
+הפקודות שלי הן:
+1. מישה סטיקר טקסט עליון;טקסט תחתון
+2. מישה מודל - נותן את ההגשות של התרגילים במודל""")
 
 
 while True:
