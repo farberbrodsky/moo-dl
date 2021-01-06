@@ -4,7 +4,7 @@ from openwa.objects.message import Message, MediaMessage
 from openwa.helper import convert_to_base64
 from lib import get_data as get_moodle_data, get_message as moodle_message
 import sys, json, time, io, math
-from PIL import Image
+from PIL import Image, ImageFont, ImageDraw
 from os import environ
 from datetime import datetime
 
@@ -53,9 +53,15 @@ def get_moodle_current_data():
     return moodle_data
 
 
+def draw_text(img, text, top=True):
+    font = ImageFont.truetype("./font.ttf", 80)
+    draw = ImageDraw.Draw(img)
+    draw.text((256, 5 if top else 507), text, font=font, fill=(255, 255, 255), stroke_width=5, stroke_fill=(0, 0, 0), anchor=("mt" if top else "mb"), direction="rtl")
+
 def got_message(message):
     global memory
     msg = message.messages[0]
+
     if isinstance(msg, MediaMessage):
         command = msg.caption
     else:
@@ -64,13 +70,15 @@ def got_message(message):
     if not command.startswith("מישה "):
         return
     command = command[5:]
+    command_words = command.split(" ")
+    command_first_word = command_words[0]
 
-    if command == "מודל":
+    if command_first_word == "מודל":
         driver.chat_send_message(
             msg.chat_id, moodle_message(
                 get_moodle_current_data()
             ))
-    elif command == "סטיקר":
+    elif command_first_word == "סטיקר":
         if isinstance(msg, MediaMessage):
             img = Image.open(driver.download_media(msg))
             # Resize image
@@ -82,7 +90,14 @@ def got_message(message):
                 result_width = math.floor(img.width * (512 / img.height))
             resized = img.resize((result_width, result_height)).convert("RGBA")
             sticker_img = Image.new("RGBA", (512, 512))
-            sticker_img.paste(resized, (math.floor((512 - result_width) / 2), math.floor((512 - result_height) / 2)))
+            sticker_img.paste(resized, ((512 - result_width) // 2, (512 - result_height) // 2))
+            # Potentially add text
+            semicolon_seperated = " ".join(command_words[1:]).split(";")
+            if len(semicolon_seperated) != 0 and semicolon_seperated[0] != "":
+                # draw text
+                draw_text(sticker_img, semicolon_seperated[0], top=True)
+                if len(semicolon_seperated) >= 2:
+                    draw_text(sticker_img, semicolon_seperated[1], top=False)
             # Send result image
             webp_img = io.BytesIO()
             sticker_img.save(webp_img, "webp")
