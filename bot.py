@@ -1,8 +1,10 @@
 from openwa import WhatsAPIDriver
 from openwa.objects.chat import Chat
-from openwa.objects.message import Message
+from openwa.objects.message import Message, MediaMessage
+from openwa.helper import convert_to_base64
 from lib import get_data as get_moodle_data, get_message as moodle_message
-import sys, json, time
+import sys, json, time, io, math
+from PIL import Image
 from os import environ
 from datetime import datetime
 
@@ -54,19 +56,41 @@ def get_moodle_current_data():
 def got_message(message):
     global memory
     msg = message.messages[0]
-    if isinstance(msg, Message):
-        print(msg.content)
-        if not msg.content.startswith("מישה "):
-            return
-        command = msg.content[5:]
+    if isinstance(msg, MediaMessage):
+        command = msg.caption
+    else:
+        command = msg.content
 
-        if command == "לולי":
-            driver.chat_send_message(msg.chat_id, "no")
-        elif command == "מודל":
-            driver.chat_send_message(
-                msg.chat_id, moodle_message(
-                    get_moodle_current_data()
-                ))
+    if not command.startswith("מישה "):
+        return
+    command = command[5:]
+
+    if command == "מודל":
+        driver.chat_send_message(
+            msg.chat_id, moodle_message(
+                get_moodle_current_data()
+            ))
+    elif command == "סטיקר":
+        if isinstance(msg, MediaMessage):
+            img = Image.open(driver.download_media(msg))
+            # Resize image
+            if img.width > img.height:
+                result_width = 512
+                result_height = math.floor(img.height * (512 / img.width))
+            else:
+                result_height = 512
+                result_width = math.floor(img.width * (512 / img.height))
+            resized = img.resize((result_width, result_height)).convert("RGBA")
+            sticker_img = Image.new("RGBA", (512, 512))
+            sticker_img.paste(resized, (math.floor((512 - result_width) / 2), math.floor((512 - result_height) / 2)))
+            # Send result image
+            webp_img = io.BytesIO()
+            sticker_img.save(webp_img, "webp")
+            webp_img.seek(0)
+            img_base_64 = convert_to_base64(webp_img, is_thumbnail=True)
+            return driver.wapi_functions.sendImageAsSticker(img_base_64, msg.chat_id, {})
+        else:
+            driver.chat_send_message(msg.chat_id, "אין פה תמונה")
 
 
 while True:
